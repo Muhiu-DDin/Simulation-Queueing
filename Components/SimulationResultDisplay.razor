@@ -1,0 +1,169 @@
+@if (Results == null)
+{
+    <div style="height:250px; display:flex; align-items:center; justify-content:center; color:gray;">
+        Run simulation to see results
+    </div>
+}
+else
+{
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+        <!-- MAIN TABLE -->
+        <div style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-card); overflow:hidden; box-shadow: var(--shadow-card);">
+            
+            <div style="text-align:center; padding:12px; font-weight:700; color:var(--text-primary); background:var(--bg-secondary); border-bottom:1px solid var(--border-color); font-family:var(--font-display); font-size:0.95rem; letter-spacing:0.04em; text-transform:uppercase;">
+                Simulation Results
+            </div>
+
+            <div style="overflow-x:auto;">
+                <div style="max-height:450px; overflow-y:auto;">
+                    <table style="min-width:1100px; width:100%; border-collapse:collapse; text-align:center;">
+
+                        <!-- Header -->
+                        <thead style="position:sticky; top:0; background: var(--bg-secondary); color: var(--text-primary); border-bottom: 1px solid var(--border-color); font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">
+                            <tr>
+                                @foreach (var h in Headers)
+                                {
+                                    <th style="padding:12px 8px;">@h</th>
+                                }
+                            </tr>
+                        </thead>
+
+                        <!-- Body -->
+                        <tbody>
+                            @for (int i = 0; i < Results.Customers.Count; i++)
+                            {
+                                var customer = Results.Customers[i];
+                                var cpEntry = (Results.CpTable != null && Results.CpTable.Count > 0 && i < Results.CpTable.Count)
+                                    ? Results.CpTable[i]
+                                    : null;
+
+                                double prevCp = 0;
+                                if (i > 0 && Results.CpTable != null && Results.CpTable.Count > 0 && (i - 1) < Results.CpTable.Count)
+                                {
+                                    prevCp = Results.CpTable[i - 1].Cp;
+                                }
+
+                                var range = cpEntry != null
+                                    ? (i == 0 ? $"0 - {cpEntry.Cp}" : $"{prevCp} - {cpEntry.Cp}")
+                                    : "-";
+
+                                <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); transition: var(--transition); font-size: 0.88rem;" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding: 10px 8px;">@customer.Id</td>
+                                    <td style="padding: 10px 8px;">@(cpEntry?.Prob.ToString() ?? "-")</td>
+                                    <td style="padding: 10px 8px;">@(cpEntry?.Cp.ToString() ?? "-")</td>
+                                    <td style="padding: 10px 8px;">@range</td>
+                                    <td style="padding: 10px 8px;">@customer.InterArrival</td>
+                                    <td style="padding: 10px 8px;">@customer.ArrivalTime</td>
+                                    <td style="padding: 10px 8px;">@customer.ServiceTime</td>
+                                    <td style="padding: 10px 8px;">@customer.StartTime</td>
+                                    <td style="padding: 10px 8px;">@customer.EndTime</td>
+                                    <td style="padding: 10px 8px;">@customer.TurnAround</td>
+                                    <td style="padding: 10px 8px;">@customer.WaitTime</td>
+                                    <td style="padding: 10px 8px;">@customer.ResponseTime</td>
+                                </tr>
+                            }
+
+                            <!-- Averages Row -->
+                            @if (Results.Averages != null)
+                            {
+                                <tr style="background: rgba(99, 102, 241, 0.08); font-weight: bold; color: var(--text-primary); border-top: 1px solid var(--border-color); font-size: 0.88rem;">
+                                    <td style="padding: 12px 8px;">Avg</td>
+                                    <td style="padding: 12px 8px;" colspan="3">-</td>
+                                    <td style="padding: 12px 8px;">@Results.Averages.InterArrival</td>
+                                    <td style="padding: 12px 8px;">-</td>
+                                    <td style="padding: 12px 8px;">@Results.Averages.ServiceTime</td>
+                                    <td style="padding: 12px 8px;" colspan="2">-</td>
+                                    <td style="padding: 12px 8px;">@Results.Averages.TurnAround</td>
+                                    <td style="padding: 12px 8px;">@Results.Averages.WaitTime</td>
+                                    <td style="padding: 12px 8px;">@Results.Averages.ResponseTime</td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOWER SECTION -->
+        <div style="display:grid; grid-template-columns:1fr; gap:20px;">
+
+            <!-- SERVER UTILIZATION -->
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; background: var(--bg-card); box-shadow: var(--shadow-card);">
+                <h3 style="color: var(--text-primary); font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 16px; letter-spacing: 0.04em; text-transform: uppercase;">Server Utilization</h3>
+
+                <table style="width:100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: rgba(99, 102, 241, 0.08); color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
+                            <th style="padding: 10px;">Server</th>
+                            <th style="padding: 10px;">Utilization (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var server in Results.Servers)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">
+                                <td style="padding: 10px;">Server @server.Id</td>
+                                <td style="padding: 10px;"><b style="color: var(--accent-secondary);">@server.Utilization%</b></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- GANTT CHARTS -->
+            @if (Results.Customers != null && Results.Customers.Any() && Results.Servers != null)
+            {
+                double maxEndTime = Results.Customers.Max(c => c.EndTime);
+                if (maxEndTime > 0)
+                {
+                    @foreach (var server in Results.Servers)
+                    {
+                        var serverCustomers = Results.Customers.Where(c => c.ServerId == server.Id).OrderBy(c => c.StartTime).ToList();
+                        if (serverCustomers.Any())
+                        {
+                            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; background: var(--bg-card); box-shadow: var(--shadow-card); margin-top: 20px;">
+                                <h3 style="color: var(--text-primary); font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 16px; letter-spacing: 0.04em; text-transform: uppercase;">
+                                    @(Results.Servers.Count > 1 ? $"Gantt Chart - Server {server.Id}" : "Gantt Chart")
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    @foreach (var c in serverCustomers)
+                                    {
+                                        double startPercent = (c.StartTime / maxEndTime) * 100;
+                                        double widthPercent = ((c.EndTime - c.StartTime) / maxEndTime) * 100;
+                                        string leftStyle = startPercent.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%";
+                                        string widthStyle = widthPercent.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%";
+                                        
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="width: 60px; font-size: 0.8rem; color: var(--text-secondary); text-align: right; white-space: nowrap;">C @c.Id</div>
+                                            <div style="width: 40px; font-size: 0.8rem; color: var(--text-secondary); text-align: right; white-space: nowrap;">@c.StartTime</div>
+                                            <div style="flex: 1; height: 20px; background: var(--bg-secondary); border-radius: 4px; position: relative;">
+                                                <div style="position: absolute; left: @leftStyle; width: @widthStyle; height: 100%; background: #6366f1; border-radius: 4px;" title="Start: @c.StartTime, End: @c.EndTime"></div>
+                                            </div>
+                                            <div style="width: 60px; font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">@c.EndTime</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public SimulationResult? Results { get; set; }
+
+    List<string> Headers = new()
+    {
+        "S.No", "P(X=x)", "CP", "Range",
+        "Inter Arrival", "Arrival",
+        "Service", "Start", "End",
+        "Turn Around", "Wait", "Response"
+    };
+}

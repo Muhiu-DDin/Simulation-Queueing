@@ -1,0 +1,56 @@
+@using queueanalysis.Models
+@using queueanalysis.Services
+@page "/simulation"
+
+<h1 style="font-size: 1.7rem; font-weight: 800; color: var(--text-primary); margin-top: 0; margin-bottom: 8px; font-family: var(--font-display); letter-spacing: -0.02em;">Queue Simulation</h1>
+<p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0 0 24px 0; line-height: 1.55; font-family: var(--font-body);">Configure a multi-server queue network model and run a discrete-event simulation to observe arrival patterns, waiting lines, and server capacity utilization.</p>
+
+<div style="display:flex; flex-direction:column; gap:20px;">
+
+    <SimulationForm 
+        OnRunSimulation="RunSimulation" 
+        IsRunning="@IsRunning" />
+
+    <SimulationResultDisplay Results="@Results" />
+
+</div>
+
+@code {
+    private SimulationResult? Results;
+    private bool IsRunning = false;
+
+    [Inject] private SimulationEngine Engine { get; set; } = default!;
+
+    private async Task RunSimulation(SimulationParams parameters)
+    {
+        IsRunning = true;
+        StateHasChanged();
+
+        await Task.Run(() =>
+        {
+            var result = Engine.RunSimulation(
+                parameters.ArrivalParams.Type,
+                parameters.ServiceParams.Type,
+                parameters.ArrivalParams,
+                parameters.ServiceParams,
+                parameters.NumServers,
+                parameters.NumCustomers
+            );
+
+            Results = new SimulationResult
+            {
+                Customers = result.Customers,
+                Servers = result.Servers,
+                QueueLengthOverTime = result.QueueLengthOverTime,
+                ServerUtilizationOverTime = result.ServerUtilizationOverTime,
+                Averages = result.Averages,
+                TotalArrivals = result.TotalArrivals,
+                TotalServed = result.TotalServed,
+                CpTable = result.CpTable
+            };
+        });
+
+        IsRunning = false;
+        StateHasChanged();
+    }
+}

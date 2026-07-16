@@ -1,0 +1,288 @@
+@using System
+@using queueanalysis.Models
+
+<div style="@CardStyle">
+
+    <!-- Header -->
+    <div style="@HeaderStyle">
+        <span style="font-size:16px; font-weight:700; color:var(--text-primary);">
+            Simulation Configuration
+        </span>
+
+        <span style="font-size:12px; font-weight:600; color:var(--accent-primary); background:rgba(99, 102, 241, 0.1); padding:4px 8px; border-radius:4px;">
+            @QueueNotation
+        </span>
+    </div>
+
+    <div style="padding:24px;">
+
+        <!-- TWO COLUMNS -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px;">
+
+            <!-- ================= ARRIVAL ================= -->
+            <div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="@LabelStyle">Arrival Process</label>
+                    <select class="sim-select" value="@ArrivalProcess" @onchange="OnArrivalProcessChanged" style="@InputStyle">
+                        <option value="M">M (Markovian)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="@LabelStyle">Type</label>
+                    <select class="sim-select" @bind="ArrivalDistribution" style="@InputStyle">
+                        @if (ArrivalProcess == "M")
+                        {
+                            <option value="poisson">Poisson</option>
+                            <option value="exponential">Exponential</option>
+                        }
+                        else
+                        {
+                            <option value="normal">Normal</option>
+                            <option value="uniform">Uniform</option>
+                        }
+                    </select>
+                </div>
+
+                @if (ArrivalProcess == "M")
+                {
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">Lambda (λ)</label>
+                        <input type="number" step="0.1" min="0.1"
+                               @bind="ArrivalRate"
+                               style="@InputStyle" />
+                    </div>
+                }
+
+                @if (ArrivalDistribution == "normal" && ArrivalProcess == "G")
+                {
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">Mean</label>
+                        <input type="number" step="0.1"
+                               @bind="ArrivalMean"
+                               style="@InputStyle" />
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">Std Dev (σ)</label>
+                        <input type="number" step="0.05"
+                               @bind="ArrivalStdDev"
+                               style="@InputStyle" />
+                    </div>
+                }
+
+                @if (ArrivalDistribution == "uniform" && ArrivalProcess == "G")
+                {
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">a (min)</label>
+                        <input type="number" step="0.1"
+                               @bind="ArrivalA"
+                               style="@InputStyle" />
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">b (max)</label>
+                        <input type="number" step="0.1"
+                               @bind="ArrivalB"
+                               style="@InputStyle" />
+                    </div>
+                }
+
+            </div>
+
+            <!-- ================= SERVICE ================= -->
+            <div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="@LabelStyle">Service Process</label>
+                    <select class="sim-select" value="@ServiceProcess" @onchange="OnServiceProcessChanged" style="@InputStyle">
+                        <option value="M">M (Markovian)</option>
+                        <option value="G">G (General)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="@LabelStyle">Type</label>
+                    <select class="sim-select" @bind="ServiceDistribution" style="@InputStyle">
+                        @if (ServiceProcess == "M")
+                        {
+                            <option value="poisson">Poisson</option>
+                            <option value="exponential">Exponential</option>
+                        }
+                        else
+                        {
+                            <option value="normal">Normal</option>
+                            <option value="uniform">Uniform</option>
+                        }
+                    </select>
+                </div>
+
+                @if (ServiceProcess == "M")
+                {
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">Mu (μ)</label>
+                        <input type="number" step="0.1" min="0.1"
+                               @bind="ServiceRate"
+                               style="@InputStyle" />
+                    </div>
+                }
+
+                @if (ServiceDistribution == "normal" && ServiceProcess == "G")
+                {
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">Mean</label>
+                        <input type="number" step="0.1"
+                               @bind="ServiceMean"
+                               style="@InputStyle" />
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">Std Dev (σ)</label>
+                        <input type="number" step="0.05"
+                               @bind="ServiceStdDev"
+                               style="@InputStyle" />
+                    </div>
+                }
+
+                @if (ServiceDistribution == "uniform" && ServiceProcess == "G")
+                {
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">a (min)</label>
+                        <input type="number" step="0.1"
+                               @bind="ServiceA"
+                               style="@InputStyle" />
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="@LabelStyle">b (max)</label>
+                        <input type="number" step="0.1"
+                               @bind="ServiceB"
+                               style="@InputStyle" />
+                    </div>
+                }
+
+            </div>
+        </div>
+
+        <!-- ================= BOTTOM ================= -->
+        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #EEE; display:grid; grid-template-columns:1fr 1fr; gap:30px;">
+
+            <div>
+                <label style="@LabelStyle">Number of Servers</label>
+                <input type="number" min="1"
+                       @bind="NumServers"
+                       style="@InputStyle" />
+            </div>
+<!-- 
+            <div>
+                <label style="@LabelStyle">Number of Customers</label>
+                <input type="number" min="5" max="500"
+                       @bind="NumCustomers"
+                       style="@InputStyle" />
+            </div> -->
+        </div>
+
+        <!-- BUTTON -->
+        <button @onclick="HandleSubmit"
+                disabled="@IsRunning"
+                style="margin-top:20px; width:100%; padding:14px; background:linear-gradient(135deg, var(--accent-primary), var(--accent-dim)); color:white; border:none; border-radius:var(--radius-sm); font-weight:700; cursor:pointer; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);">
+            @(IsRunning ? "Running Simulation..." : "Start Simulation")
+        </button>
+
+    </div>
+</div>
+
+<style>
+    .sim-select option {
+        background-color: #1a1a1f;
+        color: #ffffff;
+    }
+
+    .sim-select option:hover,
+    .sim-select option:checked,
+    .sim-select option:focus {
+        background-color: var(--accent-primary, #6366f1);
+        color: #ffffff;
+    }
+</style>
+
+@code {
+
+    [Parameter] public EventCallback<SimulationParams> OnRunSimulation { get; set; }
+    [Parameter] public bool IsRunning { get; set; }
+
+    // Arrival
+    string ArrivalProcess = "M";
+    string ArrivalDistribution = "exponential";
+    double ArrivalRate = 2.96;
+    double ArrivalMean = 1;
+    double ArrivalStdDev = 0.3;
+    double ArrivalA = 0.5;
+    double ArrivalB = 1.5;
+
+    // Service
+    string ServiceProcess = "M";
+    string ServiceDistribution = "exponential";
+    double ServiceRate = 5;
+    double ServiceMean = 0.2;
+    double ServiceStdDev = 0.05;
+    double ServiceA = 0.1;
+    double ServiceB = 0.3;
+
+    // General
+    int NumServers = 2;
+    int NumCustomers = 20;
+
+    string QueueNotation => $"{ArrivalProcess}/{ServiceProcess}/{NumServers}";
+
+    void OnArrivalProcessChanged(ChangeEventArgs e)
+    {
+        ArrivalProcess = e.Value?.ToString();
+        ArrivalDistribution = ArrivalProcess == "M" ? "exponential" : "normal";
+    }
+
+    void OnServiceProcessChanged(ChangeEventArgs e)
+    {
+        ServiceProcess = e.Value?.ToString();
+        ServiceDistribution = ServiceProcess == "M" ? "exponential" : "normal";
+    }
+
+    async Task HandleSubmit()
+    {
+        var parameters = new SimulationParams
+        {
+            ArrivalProcess = ArrivalProcess,
+            ServiceProcess = ServiceProcess,
+            NumServers = Math.Max(1, NumServers),
+            NumCustomers = Math.Max(5, NumCustomers),
+
+            ArrivalParams = new queueanalysis.Services.DistributionParams
+            {
+                Type = ArrivalDistribution,
+                Rate = ArrivalRate,
+                Mean = ArrivalMean,
+                StdDev = ArrivalStdDev,
+                A = ArrivalA,
+                B = ArrivalB
+            },
+
+            ServiceParams = new queueanalysis.Services.DistributionParams
+            {
+                Type = ServiceDistribution,
+                Rate = ServiceRate,
+                Mean = ServiceMean,
+                StdDev = ServiceStdDev,
+                A = ServiceA,
+                B = ServiceB
+            }
+        };
+
+        await OnRunSimulation.InvokeAsync(parameters);
+    }
+
+    string CardStyle = "background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);";
+    string InputStyle = "width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); outline: none;";
+    string LabelStyle = "font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;";
+    string HeaderStyle = "padding:16px 24px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;";
+}

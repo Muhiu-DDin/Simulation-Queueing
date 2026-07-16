@@ -1,0 +1,67 @@
+@page "/"
+
+<PageTitle>Queue Analysis — Home</PageTitle>
+
+<div class="home-container">
+    <div class="home-hero">
+        <h1 class="home-title">
+            Queue System<br />
+            <span class="home-title-accent">Toolkit</span>
+        </h1>
+
+        <p class="home-subtitle">
+            Analyze queueing models using mathematical formulas or run discrete-event simulations with randomness and real-world behavior.
+        </p>
+
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; gap:16px; margin-top:24px;">
+
+            <!-- Queue Analysis -->
+            <a href="/queuecalc" class="home-cta">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="2" width="16" height="20" rx="2"/>
+                    <line x1="8" y1="6" x2="16" y2="6"/>
+                    <line x1="8" y1="10" x2="16" y2="10"/>
+                    <line x1="8" y1="14" x2="12" y2="14"/>
+                </svg>
+                Open Queue Calculator
+            </a>
+
+            <!-- Simulation -->
+            <a href="/simulation" class="home-cta" style="background: linear-gradient(135deg, var(--accent-secondary), #0891b2); box-shadow: 0 4px 20px rgba(6, 182, 212, 0.25);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Run Simulation
+            </a>
+
+        </div>
+    </div>
+
+    <div class="home-grid">
+
+        <div class="home-card">
+            <div class="home-card-icon">λ</div>
+            <h3 class="home-card-title">Arrival Process</h3>
+            <p class="home-card-desc">
+                Markovian (Poisson) and General arrival distributions with configurable randomness.
+            </p>
+        </div>
+
+        <div class="home-card">
+            <div class="home-card-icon">μ</div>
+            <h3 class="home-card-title">Service Process</h3>
+            <p class="home-card-desc">
+                Exponential and general service time distributions with flexible modeling.
+            </p>
+        </div>
+
+        <div class="home-card">
+            <div class="home-card-icon">ρ</div>
+            <h3 class="home-card-title">System Metrics</h3>
+            <p class="home-card-desc">
+                Utilization, waiting time, queue length, and response metrics.
+            </p>
+        </div>
+
+    </div>
+</div>

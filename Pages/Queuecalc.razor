@@ -1,0 +1,414 @@
+@page "/queuecalc"
+
+<PageTitle>Queue Calculator</PageTitle>
+
+<div class="calc-container">
+    <div class="calc-header">
+        <div>
+            <h1 class="calc-title">Queue Analysis Calculator</h1>
+            <p class="calc-subtitle">Configure arrival and service parameters to compute steady-state performance metrics.</p>
+        </div>
+        @if (showResults)
+        {
+            <div class="model-badge-large @(isStable ? "" : "model-badge-unstable")">
+                <span class="model-badge-notation">@GetModelNotation()</span>
+                <span class="model-badge-status">@(isStable ? "Stable" : "Unstable")</span>
+            </div>
+        }
+    </div>
+
+    <div class="calc-layout">
+
+        <div class="config-panel">
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-number">01</div>
+                    <div>
+                        <div class="section-title">Arrival Process</div>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Distribution Type</label>
+                    <div class="select-wrapper">
+                        <select @bind="arrivalType" class="field-select">
+                            <option value="M">M — Markovian (Poisson)</option>
+                            <option value="G">G — General (Custom Variance)</option>
+                        </select>
+                        <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">
+                        Arrival Rate
+                        <span class="field-unit">customers / time unit</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" @bind="arrivalRate" class="field-input" step="0.1" min="0.1" />
+                    </div>
+                </div>
+
+                @if (arrivalType == "G")
+                {
+                    <div class="field-group variance-field">
+                        <label class="field-label">
+                            Inter-arrival Variance (σ²)
+                            <span class="field-unit">used in Kingman's approx.</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" @bind="arrivalVariance" class="field-input" step="0.1" min="0" />
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-number">02</div>
+                    <div>
+                        <div class="section-title">Service Process</div>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Distribution Type</label>
+                    <div class="select-wrapper">
+                        <select @bind="serviceType" class="field-select">
+                            <option value="M">M — Markovian (Exponential)</option>
+                            <option value="G">G — General (Custom Variance)</option>
+                        </select>
+                        <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">
+                        Service Rate
+                        <span class="field-unit">customers served / time unit</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" @bind="serviceRate" class="field-input" step="0.1" min="0.1" />
+                    </div>
+                </div>
+
+                @if (serviceType == "G")
+                {
+                    <div class="field-group variance-field">
+                        <label class="field-label">
+                            Service Time Variance (σ²)
+                            <span class="field-unit">used in P-K / Kingman's formula</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" @bind="serviceVariance" class="field-input" step="0.1" min="0" />
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-number">03</div>
+                    <div>
+                        <div class="section-title">Servers</div>
+                        <div class="section-sub">Configure system capacity</div>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Number of Servers (c)</label>
+                    <div class="input-wrapper">
+                        <input type="number" @bind="serverCount" class="field-input" min="1" step="1" />
+                    </div>
+                </div>
+            </div>
+
+            <button class="calc-btn" @onclick="CalculateMetrics">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Run Analysis
+            </button>
+        </div>
+
+        <div class="results-panel">
+            @if (!showResults)
+            {
+                <div class="results-empty">
+                    <div class="results-empty-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                            <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 0-2 2h-2a2 2 0 0 1-2-2z"/>
+                        </svg>
+                    </div>
+                    <div class="results-empty-title">No Analysis Yet</div>
+                    <div class="results-empty-sub">Configure your parameters and click<br/>Run Analysis to see results.</div>
+                </div>
+            }
+            else
+            {
+                <div class="results-content">
+                    @if (!isStable)
+                    {
+                        <div class="alert-unstable">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            System is unstable — ρ ≥ 1. Queue grows without bound.
+                        </div>
+                    }
+                    else if (isApproximation)
+                    {
+                        <div class="alert-approx">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Values marked <strong>*</strong> are Kingman's / Sakasegawa's approximation — no exact closed-form exists.
+                        </div>
+                    }
+
+                    <div class="metrics-grid">
+                        <div class="metric-card metric-primary">
+                            <div class="metric-symbol">ρ</div>
+                            <div class="metric-value @(utilization >= 1 ? "metric-danger" : utilization > 0.8 ? "metric-warn" : "metric-ok")">
+                                @utilization.ToString("F4")
+                            </div>
+                            <div class="metric-name">Server Utilization</div>
+                            <div class="metric-desc">System load factor</div>
+                            <div class="metric-bar">
+                                <div class="metric-bar-fill @(utilization >= 1 ? "bar-danger" : utilization > 0.8 ? "bar-warn" : "bar-ok")" style="width: @(Math.Min(utilization * 100, 100).ToString("F0"))%"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-symbol">Lq</div>
+                            <div class="metric-value">@FormatResult(avgQueueLength)</div>
+                            <div class="metric-name">Avg Queue Length</div>
+                            <div class="metric-desc">Customers waiting in line</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-symbol">L</div>
+                            <div class="metric-value">@FormatResult(avgSystemSize)</div>
+                            <div class="metric-name">Avg System Size</div>
+                            <div class="metric-desc">Total customers in system</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-symbol">Wq</div>
+                            <div class="metric-value">@FormatResult(avgWaitTime)</div>
+                            <div class="metric-name">Avg Wait Time</div>
+                            <div class="metric-desc">Time spent in queue</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-symbol">W</div>
+                            <div class="metric-value">@FormatResult(avgSystemTime)</div>
+                            <div class="metric-name">Avg System Time</div>
+                            <div class="metric-desc">Total time in system</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-symbol">P₀@(isApproximation ? "*" : "")</div>
+                            <div class="metric-value">@FormatResult(emptyProb)</div>
+                            <div class="metric-name">Empty Probability</div>
+                            <div class="metric-desc">System idle@(isApproximation ? " (approx.)" : "")</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string arrivalType = "M";
+    private string serviceType = "M";
+
+    private double arrivalRate = 5.0;
+    private double serviceRate = 8.0;
+
+    private double arrivalVariance = 0.5;
+    private double serviceVariance = 0.5;
+
+    private int serverCount = 1;
+
+    private bool showResults = false;
+    private bool isStable = false;
+    private bool isApproximation = false;
+
+    private double utilization;
+    private double avgQueueLength;
+    private double avgSystemSize;
+    private double avgWaitTime;
+    private double avgSystemTime;
+    private double emptyProb;
+
+    private string GetModelNotation() => $"{arrivalType}/{serviceType}/{serverCount}";
+
+    private string FormatResult(double value) =>
+        double.IsPositiveInfinity(value) ? "∞" : value.ToString("F4");
+
+    private void CalculateMetrics()
+    {
+        isApproximation = false;
+
+        // Guard against invalid server count from manual input
+        if (serverCount < 1) serverCount = 1;
+
+        utilization = arrivalRate / (serverCount * serviceRate);
+        isStable = utilization < 1;
+
+        if (!isStable)
+        {
+            showResults = true;
+            avgQueueLength = avgSystemSize = avgWaitTime = avgSystemTime = double.PositiveInfinity;
+            emptyProb = 0;
+            return;
+        }
+
+        if (serverCount == 1)
+        {
+            if (arrivalType == "M" && serviceType == "M") CalculateMM1();
+            else if (arrivalType == "M" && serviceType == "G") CalculateMG1();
+            else { isApproximation = true; CalculateGG1(); }
+        }
+        else
+        {
+            if (arrivalType == "M" && serviceType == "M") CalculateMMC();
+            else if (arrivalType == "M" && serviceType == "G") { isApproximation = true; CalculateMGC(); }
+            else { isApproximation = true; CalculateGGC(); }
+        }
+
+        showResults = true;
+    }
+
+    // ---------------- M/M/1 ----------------
+    private void CalculateMM1()
+    {
+        double diff = serviceRate - arrivalRate;
+
+        avgQueueLength = (arrivalRate * arrivalRate) / (serviceRate * diff);
+        avgSystemSize = arrivalRate / diff;
+        avgWaitTime = arrivalRate / (serviceRate * diff);
+        avgSystemTime = 1.0 / diff;
+
+        emptyProb = 1.0 - utilization;
+    }
+
+    // ---------------- M/G/1 (Pollaczek–Khinchine) ----------------
+    private void CalculateMG1()
+    {
+        double serviceTime = 1.0 / serviceRate;
+
+        avgQueueLength =
+            (utilization * utilization + arrivalRate * arrivalRate * serviceVariance)
+            / (2.0 * (1.0 - utilization));
+
+        avgSystemSize = avgQueueLength + utilization;
+        avgWaitTime = avgQueueLength / arrivalRate;
+        avgSystemTime = avgWaitTime + serviceTime;
+
+        emptyProb = 1.0 - utilization;
+    }
+
+    // ---------------- G/G/1 (Kingman) ----------------
+    private void CalculateGG1()
+    {
+        double serviceTime = 1.0 / serviceRate;
+        double arrivalTime = 1.0 / arrivalRate;
+
+        double ca2 = arrivalVariance / (arrivalTime * arrivalTime);
+        double cs2 = serviceVariance / (serviceTime * serviceTime);
+
+        avgQueueLength =
+            (utilization * utilization * (ca2 + cs2))
+            / (2.0 * (1.0 - utilization));
+
+        avgSystemSize = avgQueueLength + utilization;
+        avgWaitTime = avgQueueLength / arrivalRate;
+        avgSystemTime = avgWaitTime + serviceTime;
+
+        emptyProb = 1.0 - utilization;
+    }
+
+    // ---------------- M/M/c (Erlang C) ----------------
+    private void CalculateMMC()
+    {
+        emptyProb = ErlangC_P0();
+        avgQueueLength = ErlangC_Lq(emptyProb);
+
+        avgWaitTime = avgQueueLength / arrivalRate;
+        avgSystemTime = avgWaitTime + (1.0 / serviceRate);
+        avgSystemSize = avgQueueLength + arrivalRate / serviceRate;
+    }
+
+    // ---------------- M/G/c (Sakasegawa approximation) ----------------
+    private void CalculateMGC()
+    {
+        double serviceTime = 1.0 / serviceRate;
+        double cs2 = serviceVariance / (serviceTime * serviceTime);
+        double ca2 = 1.0; // Poisson arrivals => ca^2 = 1
+
+        emptyProb = ErlangC_P0();
+        double lqMMC = ErlangC_Lq(emptyProb);
+
+        avgQueueLength = lqMMC * (ca2 + cs2) / 2.0;
+
+        avgWaitTime = avgQueueLength / arrivalRate;
+        avgSystemTime = avgWaitTime + serviceTime;
+        avgSystemSize = avgQueueLength + arrivalRate / serviceRate;
+    }
+
+    // ---------------- G/G/c (Sakasegawa approximation) ----------------
+    private void CalculateGGC()
+    {
+        double serviceTime = 1.0 / serviceRate;
+        double arrivalTime = 1.0 / arrivalRate;
+
+        double ca2 = arrivalVariance / (arrivalTime * arrivalTime);
+        double cs2 = serviceVariance / (serviceTime * serviceTime);
+
+        emptyProb = ErlangC_P0();
+        double lqMMC = ErlangC_Lq(emptyProb);
+
+        avgQueueLength = lqMMC * (ca2 + cs2) / 2.0;
+
+        avgWaitTime = avgQueueLength / arrivalRate;
+        avgSystemTime = avgWaitTime + serviceTime;
+        avgSystemSize = avgQueueLength + arrivalRate / serviceRate;
+    }
+
+    // ---------------- Shared Erlang C helpers ----------------
+    private double ErlangC_P0()
+    {
+        double c = serverCount;
+        double a = arrivalRate / serviceRate;
+
+        double sum = 0.0;
+        for (int k = 0; k < serverCount; k++)
+            sum += Math.Pow(a, k) / Factorial(k);
+
+        double last = Math.Pow(a, c) / (Factorial(serverCount) * (1 - utilization));
+
+        return 1.0 / (sum + last);
+    }
+
+    private double ErlangC_Lq(double p0)
+    {
+        double c = serverCount;
+        double a = arrivalRate / serviceRate;
+
+        double last = Math.Pow(a, c) / (Factorial(serverCount) * (1 - utilization));
+        double pw = last * p0;
+
+        return pw * utilization / (1 - utilization);
+    }
+
+    private double Factorial(int n)
+    {
+        if (n <= 1) return 1;
+        double r = 1;
+        for (int i = 2; i <= n; i++) r *= i;
+        return r;
+    }
+}
